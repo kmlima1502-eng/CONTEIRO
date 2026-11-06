@@ -1,23 +1,19 @@
+import os
 from app import create_app
 from app.models import db
-from sqlalchemy import text
 
 app = create_app()
 
 with app.app_context():
-    db.create_all()
-    # Tenta adicionar as colunas novas no SQLite da Render caso o banco já existisse
+    db_path = os.path.join(app.instance_path, 'database.db')
+    
+    # Se o banco antigo existir, força a remoção para recriar a estrutura correta sem Erro 500
     try:
-        db.session.execute(text("ALTER TABLE transacoes ADD COLUMN deletado BOOLEAN DEFAULT 0;"))
-        db.session.commit()
+        db.create_all()
     except Exception:
-        db.session.rollback()
-
-    try:
-        db.session.execute(text("ALTER TABLE transacoes ADD COLUMN data_deletado DATETIME;"))
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
+        if os.path.exists(db_path):
+            os.remove(db_path)
+        db.create_all()
 
 if __name__ == '__main__':
     app.run(debug=True)
