@@ -86,23 +86,25 @@ def gerenciar_categorias():
 
     categorias = Categoria.query.filter_by(user_id=current_user.id).all()
     
-    # Se o utilizador não tiver categorias, gera a lista personalizada automaticamente
+    # Se o utilizador não tiver categorias, gera a nova lista especificada
     if not categorias:
         cats_padrao = [
-            # Entradas (Receitas)
-            Categoria(nome='Serviço Prestado', tipo='receita', user_id=current_user.id),
-            Categoria(nome='Vendas / Serviços', tipo='receita', user_id=current_user.id),
-            Categoria(nome='Salário / Proventos', tipo='receita', user_id=current_user.id),
-            
-            # Saídas (Despesas)
-            Categoria(nome='Conta de Luz', tipo='despesa', user_id=current_user.id),
+            # Contas a Pagar (Despesas)
+            Categoria(nome='Carro', tipo='despesa', user_id=current_user.id),
+            Categoria(nome='IPTU', tipo='despesa', user_id=current_user.id),
+            Categoria(nome='Conta de Energia', tipo='despesa', user_id=current_user.id),
             Categoria(nome='Conta de Água', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='Gasolina', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='Gastos Inesperados', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='Alimentação', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='Moradia / Infraestrutura', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='Ferramentas & Softwares', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='Lazer & Pessoal', tipo='despesa', user_id=current_user.id)
+            Categoria(nome='Supermercado', tipo='despesa', user_id=current_user.id),
+            Categoria(nome='Cartão de crédito', tipo='despesa', user_id=current_user.id),
+            Categoria(nome='Gasto pessoal', tipo='despesa', user_id=current_user.id),
+            Categoria(nome='Outros', tipo='despesa', user_id=current_user.id),
+
+            # Contas a Receber (Receitas)
+            Categoria(nome='Salário', tipo='receita', user_id=current_user.id),
+            Categoria(nome='Aluguel', tipo='receita', user_id=current_user.id),
+            Categoria(nome='Décimo terceiro', tipo='receita', user_id=current_user.id),
+            Categoria(nome='Vendas', tipo='receita', user_id=current_user.id),
+            Categoria(nome='Outros', tipo='receita', user_id=current_user.id)
         ]
         db.session.add_all(cats_padrao)
         db.session.commit()

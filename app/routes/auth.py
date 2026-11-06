@@ -25,19 +25,24 @@ def register():
     db.session.add(novo_usuario)
     db.session.commit()
 
-    # Cria todas as categorias solicitadas no cadastro do novo usuário
+    # Cria a nova lista exata de categorias ao cadastrar qualquer novo usuário
     cats_padrao = [
-        Categoria(nome='Serviço Prestado', tipo='receita', user_id=novo_usuario.id),
-        Categoria(nome='Vendas / Serviços', tipo='receita', user_id=novo_usuario.id),
-        Categoria(nome='Salário / Proventos', tipo='receita', user_id=novo_usuario.id),
-        Categoria(nome='Conta de Luz', tipo='despesa', user_id=novo_usuario.id),
+        # Contas a Pagar (Despesas)
+        Categoria(nome='Carro', tipo='despesa', user_id=novo_usuario.id),
+        Categoria(nome='IPTU', tipo='despesa', user_id=novo_usuario.id),
+        Categoria(nome='Conta de Energia', tipo='despesa', user_id=novo_usuario.id),
         Categoria(nome='Conta de Água', tipo='despesa', user_id=novo_usuario.id),
-        Categoria(nome='Gasolina', tipo='despesa', user_id=novo_usuario.id),
-        Categoria(nome='Gastos Inesperados', tipo='despesa', user_id=novo_usuario.id),
-        Categoria(nome='Alimentação', tipo='despesa', user_id=novo_usuario.id),
-        Categoria(nome='Moradia / Infraestrutura', tipo='despesa', user_id=novo_usuario.id),
-        Categoria(nome='Ferramentas & Softwares', tipo='despesa', user_id=novo_usuario.id),
-        Categoria(nome='Lazer & Pessoal', tipo='despesa', user_id=novo_usuario.id)
+        Categoria(nome='Supermercado', tipo='despesa', user_id=novo_usuario.id),
+        Categoria(nome='Cartão de crédito', tipo='despesa', user_id=novo_usuario.id),
+        Categoria(nome='Gasto pessoal', tipo='despesa', user_id=novo_usuario.id),
+        Categoria(nome='Outros', tipo='despesa', user_id=novo_usuario.id),
+
+        # Contas a Receber (Receitas)
+        Categoria(nome='Salário', tipo='receita', user_id=novo_usuario.id),
+        Categoria(nome='Aluguel', tipo='receita', user_id=novo_usuario.id),
+        Categoria(nome='Décimo terceiro', tipo='receita', user_id=novo_usuario.id),
+        Categoria(nome='Vendas', tipo='receita', user_id=novo_usuario.id),
+        Categoria(nome='Outros', tipo='receita', user_id=novo_usuario.id)
     ]
     db.session.add_all(cats_padrao)
     db.session.commit()
