@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanceHub - Gestão Completa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen">
+
+    <!-- TELA DE AUTENTICAÇÃO -->
+    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950">
+        <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-xl mb-3">
+                    <i data-lucide="wallet" class="w-6 h-6"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-white">FinanceHub</h1>
+                <p class="text-xs text-slate-400 mt-1">Gestão financeira simples e inteligente</p>
+            </div>
+
+            <!-- MENSAGEM DE ERRO/SUCESSO -->
+            <div id="auth-alert" class="hidden mb-4 p-3 rounded-xl text-xs text-center border font-medium"></div>
+
+            <div class="flex bg-slate-950 p-1 rounded-xl mb-6 border border-slate-800">
+                <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white">Entrar</button>
+                <button id="tab-register" onclick="switchAuthTab('register')" class="flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400">Cadastrar</button>
+            </div>
+
+            <form id="form-login" onsubmit="submitLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">E-mail ou Telefone</label>
+                    <input type="text" id="login-input" required placeholder="seu@email.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Senha</label>
+                    <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200">
+                </div>
+                <button type="submit" id="btn-login" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition">Entrar na Plataforma</button>
+            </form>
+
+            <form id="form-register" onsubmit="submitRegister(event)" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Nome Completo</label>
+                    <input type="text" id="reg-name" required placeholder="Seu Nome" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">E-mail</label>
+                    <input type="email" id="reg-email" required placeholder="seu@email.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Telefone</label>
+                    <input type="tel" id="reg-phone" required placeholder="(62) 99999-9999" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Senha</label>
+                    <input type="password" id="reg-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200">
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition">Criar Conta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TELA DO PAINEL PRINCIPAL -->
+    <div id="dashboard-screen" class="hidden min-h-screen flex flex-col md:flex-row">
+        <!-- SIDEBAR COM TODAS AS ABAS OPERACIONAIS -->
+        <aside class="w-full md:w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0">
+            <div class="p-6 flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-emerald-500/10 text-emerald-400 rounded-lg flex items-center justify-center">
+                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                    </div>
+                    <span class="font-bold text-white text-lg">FinanceHub</span>
+                </div>
+            </div>
+            <nav class="p-4 space-y-1">
+                <button onclick="showSection('overview')" id="nav-overview" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-xl bg-emerald-600/10 text-emerald-400 border border-emerald-500/20">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </button>
+                <button onclick="showSection('transactions')" id="nav-transactions" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-xl text-slate-400 hover:bg-slate-800">
+                    <i data-lucide="arrow-left-right" class="w-4 h-4"></i> Contas Pagar/Receber
+                </button>
+                <button onclick="showSection('categories')" id="nav-categories" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-xl text-slate-400 hover:bg-slate-800">
+                    <i data-lucide="tags" class="w-4 h-4"></i> Categorias & Tags
+                </button>
+                <button onclick="showSection('reports')" id="nav-reports" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-xl text-slate-400 hover:bg-slate-800">
+                    <i data-lucide="file-text" class="w-4 h-4"></i> Relatório DRE
+                </button>
+                <button onclick="showSection('reconciliation')" id="nav-reconciliation" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-xl text-slate-400 hover:bg-slate-800">
+                    <i data-lucide="building-2" class="w-4 h-4"></i> Conciliação OFX
+                </button>
+            </nav>
+            <div class="p-4 border-t border-slate-800 mt-auto">
+                <button onclick="submitLogout()" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-rose-400 hover:bg-rose-500/10 rounded-xl">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Sair da Conta
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTEÚDO -->
+        <main class="flex-1 p-4 md:p-8 space-y-6">
+            <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-800">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Olá, <span id="user-display-name">Usuário</span>!</h2>
+                    <p class="text-xs text-slate-400">Resumo financeiro em tempo real</p>
+                </div>
+                <button onclick="openModal('modal-transacao')" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-lg">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Novo Lançamento
+                </button>
+            </header>
+
+            <!-- SEÇÃO 1: OVERVIEW -->
+            <section id="sec-overview" class="space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                        <p class="text-xs text-slate-400">Saldo Geral</p>
+                        <h3 id="kpi-saldo" class="text-2xl font-bold text-emerald-400 mt-1">R$ 0,00</h3>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                        <p class="text-xs text-slate-400">Contas a Receber</p>
+                        <h3 id="kpi-receber" class="text-2xl font-bold text-blue-400 mt-1">R$ 0,00</h3>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                        <p class="text-xs text-slate-400">Contas a Pagar</p>
+                        <h3 id="kpi-pagar" class="text-2xl font-bold text-rose-400 mt-1">R$ 0,00</h3>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                        <h4 class="text-sm font-semibold text-white mb-4">Evolução Mensal (Receitas vs Despesas)</h4>
+                        <div class="h-64"><canvas id="chart-tendencia"></canvas></div>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                        <h4 class="text-sm font-semibold text-white mb-4">Gastos por Categoria</h4>
+                        <div class="h-64"><canvas id="chart-distribuicao"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 2: TRANSAÇÕES -->
+            <section id="sec-transactions" class="space-y-6 hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-950 text-slate-400 uppercase border-b border-slate-800">
+                                <tr>
+                                    <th class="p-4">Descrição</th>
+                                    <th class="p-4">Categoria</th>
+                                    <th class="p-4">Vencimento</th>
+                                    <th class="p-4">Valor</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4 text-right">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-transacoes" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 3: CATEGORIAS -->
+            <section id="sec-categories" class="space-y-6 hidden">
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                    <h3 class="text-sm font-bold text-white mb-4">Categorias Cadastradas</h3>
+                    <ul id="lista-categorias" class="space-y-2 text-xs"></ul>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 4: RELATÓRIOS DRE -->
+            <section id="sec-reports" class="space-y-6 hidden">
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-3 text-xs">
+                    <h3 class="text-sm font-bold text-white mb-4">Demonstrativo de Resultado (DRE Simplificado)</h3>
+                    <div class="flex justify-between p-3 bg-slate-950 rounded-xl"><span class="font-bold">(=) Receita Total</span><span id="dre-receita" class="text-emerald-400 font-bold">R$ 0,00</span></div>
+                    <div class="flex justify-between p-3 bg-slate-950/50 text-slate-400"><span>(-) Despesas Totais</span><span id="dre-despesa" class="text-rose-400">R$ 0,00</span></div>
+                    <div class="flex justify-between p-3 bg-emerald-950/40 border border-emerald-500/20 rounded-xl font-bold"><span class="text-white">(=) Resultado Líquido</span><span id="dre-resultado" class="text-emerald-400">R$ 0,00</span></div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO 5: CONCILIAÇÃO OFX -->
+            <section id="sec-reconciliation" class="space-y-6 hidden">
+                <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center space-y-3">
+                    <i data-lucide="upload-cloud" class="w-10 h-10 text-emerald-400 mx-auto"></i>
+                    <h4 class="text-sm font-semibold text-white">Importar Extrato Bancário (.OFX)</h4>
+                    <p class="text-xs text-slate-400">Envie o arquivo OFX do seu banco para fazer o cruzamento de lançamentos.</p>
+                    <input type="file" id="file-ofx" class="hidden">
+                    <button onclick="document.getElementById('file-ofx').click()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-xs font-semibold border border-slate-700">Selecionar Extrato OFX</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL DE NOVO LANÇAMENTO -->
+    <div id="modal-transacao" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-bold text-white">Novo Lançamento</h3>
+                <button onclick="closeModal('modal-transacao')" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <form onsubmit="salvarTransacao(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1">Tipo</label>
+                    <select id="input-tipo" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200">
+                        <option value="despesa">Conta a Pagar (Saída)</option>
+                        <option value="receita">Conta a Receber (Entrada)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Descrição</label>
+                    <input type="text" id="input-desc" required placeholder="Ex: Fornecedor de internet" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Valor (R$)</label>
+                        <input type="number" step="0.01" id="input-valor" required placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Vencimento</label>
+                        <input type="date" id="input-vencimento" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1">Categoria</label>
+                    <select id="input-cat" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200"></select>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl transition mt-2">Salvar Lançamento</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        let chartTendencia, chartDistribuicao;
+
+        function showAlert(msg, type) {
+            const box = document.getElementById('auth-alert');
+            box.classList.remove('hidden', 'bg-rose-500/10', 'text-rose-400', 'border-rose-500/20', 'bg-emerald-500/10', 'text-emerald-400', 'border-emerald-500/20');
+            box.classList.add(type === 'error' ? 'bg-rose-500/10' : 'bg-emerald-500/10');
+            box.classList.add(type === 'error' ? 'text-rose-400' : 'text-emerald-400');
+            box.classList.add(type === 'error' ? 'border-rose-500/20' : 'border-emerald-500/20');
+            box.innerText = msg;
+        }
+
+        function switchAuthTab(type) {
+            document.getElementById('form-login').classList.add('hidden');
+            document.getElementById('form-register').classList.add('hidden');
+            document.getElementById('auth-alert').classList.add('hidden');
+            document.getElementById('tab-login').className = "flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400";
+            document.getElementById('tab-register').className = "flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400";
+
+            if (type === 'login') {
+                document.getElementById('form-login').classList.remove('hidden');
+                document.getElementById('tab-login').className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white";
+            } else {
+                document.getElementById('form-register').classList.remove('hidden');
+                document.getElementById('tab-register').className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white";
+            }
+        }
+
+        function showSection(sec) {
+            ['overview', 'transactions', 'categories', 'reports', 'reconciliation'].forEach(s => {
+                document.getElementById(`sec-${s}`).classList.add('hidden');
+            });
+            document.getElementById(`sec-${sec}`).classList.remove('hidden');
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        async function submitRegister(e) {
+            e.preventDefault();
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nome: document.getElementById('reg-name').value,
+                    email: document.getElementById('reg-email').value,
+                    telefone: document.getElementById('reg-phone').value,
+                    senha: document.getElementById('reg-password').value
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showAlert('Conta criada! Faça login com suas credenciais.', 'success');
+                switchAuthTab('login');
+            } else {
+                showAlert(data.message, 'error');
+            }
+        }
+
+        async function submitLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-login');
+            btn.innerText = "Entrando...";
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        login: document.getElementById('login-input').value,
+                        senha: document.getElementById('login-password').value
+                    })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    document.getElementById('user-display-name').innerText = data.nome;
+                    document.getElementById('auth-screen').classList.add('hidden');
+                    document.getElementById('dashboard-screen').classList.remove('hidden');
+                    await carregarCategorias();
+                    await carregarDados();
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (err) {
+                showAlert('Erro ao conectar com o servidor.', 'error');
+            } finally {
+                btn.innerText = "Entrar na Plataforma";
+            }
+        }
+
+        async function carregarCategorias() {
+            const res = await fetch('/api/categorias');
+            const cats = await res.json();
+            const select = document.getElementById('input-cat');
+            const lista = document.getElementById('lista-categorias');
+
+            select.innerHTML = cats.map(c => `<option value="${c.id}">${c.nome} (${c.tipo})</option>`).join('');
+            lista.innerHTML = cats.map(c => `<li class="p-3 bg-slate-950 rounded-xl flex justify-between"><span>${c.nome}</span><span class="text-slate-400 capitalize">${c.tipo}</span></li>`).join('');
+        }
+
+        async function carregarDados() {
+            const res = await fetch('/api/transacoes');
+            const data = await res.json();
+            
+            document.getElementById('kpi-saldo').innerText = `R$ ${data.kpis.saldo_geral.toFixed(2)}`;
+            document.getElementById('kpi-receber').innerText = `R$ ${data.kpis.a_receber.toFixed(2)}`;
+            document.getElementById('kpi-pagar').innerText = `R$ ${data.kpis.a_pagar.toFixed(2)}`;
+
+            // Atualiza DRE
+            document.getElementById('dre-receita').innerText = `R$ ${data.kpis.saldo_geral.toFixed(2)}`;
+            document.getElementById('dre-despesa').innerText = `R$ ${data.kpis.a_pagar.toFixed(2)}`;
+            document.getElementById('dre-resultado').innerText = `R$ ${(data.kpis.saldo_geral - data.kpis.a_pagar).toFixed(2)}`;
+
+            const tbody = document.getElementById('tabela-transacoes');
+            tbody.innerHTML = data.transacoes.map(t => `
+                <tr>
+                    <td class="p-4 font-semibold text-white">${t.descricao}</td>
+                    <td class="p-4">${t.categoria}</td>
+                    <td class="p-4">${t.vencimento}</td>
+                    <td class="p-4 ${t.tipo === 'receita' ? 'text-emerald-400' : 'text-rose-400'}">R$ ${t.valor.toFixed(2)}</td>
+                    <td class="p-4"><span class="px-2 py-0.5 rounded-full text-[10px] ${t.status === 'pago' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}">${t.status}</span></td>
+                    <td class="p-4 text-right">
+                        ${t.status === 'pendente' ? `<button onclick="marcarPago(${t.id})" class="text-emerald-400 hover:underline">Marcar Pago</button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+
+            carregarGraficos();
+        }
+
+        async function salvarTransacao(e) {
+            e.preventDefault();
+            await fetch('/api/transacoes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tipo: document.getElementById('input-tipo').value,
+                    descricao: document.getElementById('input-desc').value,
+                    valor: document.getElementById('input-valor').value,
+                    data_vencimento: document.getElementById('input-vencimento').value,
+                    categoria_id: document.getElementById('input-cat').value
+                })
+            });
+            closeModal('modal-transacao');
+            carregarDados();
+        }
+
+        async function marcarPago(id) {
+            await fetch(`/api/transacoes/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'pago' })
+            });
+            carregarDados();
+        }
+
+        async function submitLogout() {
+            await fetch('/api/logout', { method: 'POST' });
+            document.getElementById('dashboard-screen').classList.add('hidden');
+            document.getElementById('auth-screen').classList.remove('hidden');
+        }
+
+        async function carregarGraficos() {
+            const res = await fetch('/api/dashboard/analytics');
+            const analytics = await res.json();
+
+            if (chartTendencia) chartTendencia.destroy();
+            if (chartDistribuicao) chartDistribuicao.destroy();
+
+            const ctx1 = document.getElementById('chart-tendencia').getContext('2d');
+            chartTendencia = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: analytics.tendencia.labels.length ? analytics.tendencia.labels : ['Sem dados'],
+                    datasets: [
+                        { label: 'Receitas', data: analytics.tendencia.receitas.length ? analytics.tendencia.receitas : [0], borderColor: '#10b981', tension: 0.3 },
+                        { label: 'Despesas', data: analytics.tendencia.despesas.length ? analytics.tendencia.despesas : [0], borderColor: '#f43f5e', tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const ctx2 = document.getElementById('chart-distribuicao').getContext('2d');
+            chartDistribuicao = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: analytics.distribuicao.labels.length ? analytics.distribuicao.labels : ['Sem dados'],
+                    datasets: [{ data: analytics.distribuicao.data.length ? analytics.distribuicao.data : [1], backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#f43f5e'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+    </script>
+</body>
+</html>
