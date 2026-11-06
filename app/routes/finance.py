@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
-from app.models import db, Transacao, Categoria, Subcategoria, MetaOrcamentaria
+from app.models import db, Transacao, Categoria
 from datetime import datetime, date
 from sqlalchemy import func
 
@@ -51,7 +51,8 @@ def gerenciar_transacoes():
         db.session.commit()
         return jsonify({'success': True, 'message': 'Lançamento efetuado com sucesso!'}), 201
 
-    transacoes = Transacao.query.filter_by(user_id=current_user.id).order_by(Transacao.data_vencimento.asc()).all()
+    # Retorna apenas lançamentos ativos (não deletados)
+    transacoes = Transacao.query.filter_by(user_id=current_user.id, deletado=False).order_by(Transacao.data_vencimento.asc()).all()
     
     saldo_geral = sum(t.valor if t.tipo == 'receita' and t.status == 'pago' else -t.valor for t in transacoes if t.status == 'pago')
     a_receber = sum(t.valor for t in transacoes if t.tipo == 'receita' and t.status == 'pendente')
@@ -87,19 +88,42 @@ def alterar_status(id):
     db.session.commit()
     return jsonify({'success': True})
 
+# 3. CANCELAR / EXCLUIR LANÇAMENTO (MOVER PARA O HISTÓRICO)
+@finance_bp.route('/api/transacoes/<int:id>', methods=['DELETE'])
+@login_required
+def deletar_transacao(id):
+    t = Transacao.query.filter_by(id=id, user_id=current_user.id).first_or_404()
+    t.deletado = True
+    t.data_deletado = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'success': True, 'message': 'Lançamento movido para o histórico de exclusões.'})
+
+# 4. OBTER HISTÓRICO DE EXCLUSÕES
+@finance_bp.route('/api/historico-exclusoes', methods=['GET'])
+@login_required
+def historico_exclusoes():
+    excluidos = Transacao.query.filter_by(user_id=current_user.id, deletado=True).order_by(Transacao.data_deletado.desc()).all()
+    lista = [{
+        'id': t.id,
+        'descricao': t.descricao,
+        'valor': t.valor,
+        'tipo': t.tipo,
+        'categoria': t.categoria_ref.nome if t.categoria_ref else 'Sem Categoria',
+        'data_exclusao': t.data_deletado.strftime('%d/%m/%Y %H:%M') if t.data_deletado else 'N/I'
+    } for t in excluidos]
+    return jsonify(lista)
+
 # ==========================================
-# GESTÃO DE CATEGORIAS (FORÇA A RECRIAÇÃO NA RENDER)
+# GESTÃO DE CATEGORIAS
 # ==========================================
 
 @finance_bp.route('/api/categorias', methods=['GET'])
 @login_required
 def gerenciar_categorias():
     categorias = Categoria.query.filter_by(user_id=current_user.id).all()
-    
     nomes_atuais = [c.nome for c in categorias]
     nomes_esperados = [item['nome'] for item in LISTA_CATEGORIAS_EXATAS]
     
-    # Se a conta tiver categorias antigas ou quantidade diferente de 13, apaga e insere a lista certa
     if len(categorias) != 13 or set(nomes_atuais) != set(nomes_esperados):
         Categoria.query.filter_by(user_id=current_user.id).delete()
         db.session.commit()
@@ -122,7 +146,7 @@ def dashboard_analytics():
         func.strftime('%Y-%m', Transacao.data_vencimento).label('mes'),
         Transacao.tipo,
         func.sum(Transacao.valor).label('total')
-    ).filter(Transacao.user_id == current_user.id)\
+    ).filter(Transacao.user_id == current_user.id, Transacao.deletado == False)\
      .group_by('mes', Transacao.tipo)\
      .order_by('mes').all()
 
@@ -134,7 +158,7 @@ def dashboard_analytics():
         Categoria.nome,
         func.sum(Transacao.valor).label('total')
     ).join(Transacao, Transacao.categoria_id == Categoria.id)\
-     .filter(Transacao.user_id == current_user.id, Transacao.tipo == 'despesa')\
+     .filter(Transacao.user_id == current_user.id, Transacao.tipo == 'despesa', Transacao.deletado == False)\
      .group_by(Categoria.nome).all()
 
     return jsonify({
