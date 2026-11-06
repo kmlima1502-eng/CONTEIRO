@@ -10,6 +10,10 @@ finance_bp = Blueprint('finance', __name__)
 def index():
     return render_template('index.html')
 
+# ==========================================
+# MÓDULO 2: RECURSOS OPERACIONAIS & CRUD
+# ==========================================
+
 # 1. FLUXO DE CAIXA E TRANSAÇÕES
 @finance_bp.route('/api/transacoes', methods=['GET', 'POST'])
 @login_required
@@ -31,10 +35,8 @@ def gerenciar_transacoes():
         db.session.commit()
         return jsonify({'success': True, 'message': 'Lançamento efetuado com sucesso!'}), 201
 
-    # Busca transações do usuário logado
     transacoes = Transacao.query.filter_by(user_id=current_user.id).order_by(Transacao.data_vencimento.asc()).all()
     
-    # Cálculo em tempo real dos KPIs
     saldo_geral = sum(t.valor if t.tipo == 'receita' and t.status == 'pago' else -t.valor for t in transacoes if t.status == 'pago')
     a_receber = sum(t.valor for t in transacoes if t.tipo == 'receita' and t.status == 'pendente')
     a_pagar = sum(t.valor for t in transacoes if t.tipo == 'despesa' and t.status == 'pendente')
@@ -83,11 +85,33 @@ def gerenciar_categorias():
         return jsonify({'success': True}), 201
 
     categorias = Categoria.query.filter_by(user_id=current_user.id).all()
+    
+    # Se o utilizador não tiver categorias, gera a lista personalizada automaticamente
+    if not categorias:
+        cats_padrao = [
+            # Entradas (Receitas)
+            Categoria(nome='Serviço Prestado', tipo='receita', user_id=current_user.id),
+            Categoria(nome='Vendas / Serviços', tipo='receita', user_id=current_user.id),
+            Categoria(nome='Salário / Proventos', tipo='receita', user_id=current_user.id),
+            
+            # Saídas (Despesas)
+            Categoria(nome='Conta de Luz', tipo='despesa', user_id=current_user.id),
+            Categoria(nome='Conta de Água', tipo='despesa', user_id=current_user.id),
+            Categoria(nome='Gasolina', tipo='despesa', user_id=current_user.id),
+            Categoria(nome='Gastos Inesperados', tipo='despesa', user_id=current_user.id),
+            Categoria(nome='Alimentação', tipo='despesa', user_id=current_user.id),
+            Categoria(nome='Moradia / Infraestrutura', tipo='despesa', user_id=current_user.id),
+            Categoria(nome='Ferramentas & Softwares', tipo='despesa', user_id=current_user.id),
+            Categoria(nome='Lazer & Pessoal', tipo='despesa', user_id=current_user.id)
+        ]
+        db.session.add_all(cats_padrao)
+        db.session.commit()
+        categorias = Categoria.query.filter_by(user_id=current_user.id).all()
+
     res = [{
         'id': c.id,
         'nome': c.nome,
-        'tipo': c.tipo,
-        'subcategorias': [{'id': s.id, 'nome': s.nome} for s.subcategorias in [c.subcategorias] for s in Subcategoria]
+        'tipo': c.tipo
     } for c in categorias]
     return jsonify(res)
 
@@ -100,7 +124,7 @@ def gerenciar_metas():
         meta = MetaOrcamentaria(
             categoria_id=data['categoria_id'],
             teto_gasto=float(data['teto_gasto']),
-            mes_ano=data['mes_ano'], # Ex: '2026-11'
+            mes_ano=data['mes_ano'],
             user_id=current_user.id
         )
         db.session.add(meta)
@@ -110,7 +134,6 @@ def gerenciar_metas():
     metas = MetaOrcamentaria.query.filter_by(user_id=current_user.id).all()
     resultado = []
     for m in metas:
-        # Calcular gasto real da categoria no mês selecionado
         gastos = db.session.query(func.sum(Transacao.valor)).filter(
             Transacao.user_id == current_user.id,
             Transacao.categoria_id == m.categoria_id,
@@ -125,10 +148,15 @@ def gerenciar_metas():
             'gasto_atual': gastos,
             'progresso_perc': round((gastos / m.teto_gasto) * 100, 2) if m.teto_gasto > 0 else 0
         })
-    return jsonify(resultado)@finance_bp.route('/api/dashboard/analytics', methods=['GET'])
+    return jsonify(resultado)
+
+# ==========================================
+# MÓDULO 3: VISÃO ANALÍTICA (GRÁFICOS)
+# ==========================================
+
+@finance_bp.route('/api/dashboard/analytics', methods=['GET'])
 @login_required
 def dashboard_analytics():
-    # 1. Gráfico de Tendência (Evolução de Receitas vs Despesas)
     dados_mensais = db.session.query(
         func.strftime('%Y-%m', Transacao.data_vencimento).label('mes'),
         Transacao.tipo,
@@ -141,7 +169,6 @@ def dashboard_analytics():
     receitas = [next((d.total for d in dados_mensais if d.mes == m and d.tipo == 'receita'), 0.0) for m in meses]
     despesas = [next((d.total for d in dados_mensais if d.mes == m and d.tipo == 'despesa'), 0.0) for m in meses]
 
-    # 2. Gráfico de Distribuição por Categoria
     distribuicao = db.session.query(
         Categoria.nome,
         func.sum(Transacao.valor).label('total')
