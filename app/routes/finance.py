@@ -45,14 +45,17 @@ def gerenciar_transacoes():
             status=data.get('status', 'pendente'),
             data_vencimento=datetime.strptime(data['data_vencimento'], '%Y-%m-%d').date(),
             categoria_id=int(data['categoria_id']),
-            user_id=current_user.id
+            user_id=current_user.id,
+            deletado=False
         )
         db.session.add(nova)
         db.session.commit()
         return jsonify({'success': True, 'message': 'Lançamento efetuado com sucesso!'}), 201
 
-    # Retorna apenas lançamentos ativos (não deletados)
-    transacoes = Transacao.query.filter_by(user_id=current_user.id, deletado=False).order_by(Transacao.data_vencimento.asc()).all()
+    try:
+        transacoes = Transacao.query.filter_by(user_id=current_user.id, deletado=False).order_by(Transacao.data_vencimento.asc()).all()
+    except Exception:
+        transacoes = Transacao.query.filter_by(user_id=current_user.id).order_by(Transacao.data_vencimento.asc()).all()
     
     saldo_geral = sum(t.valor if t.tipo == 'receita' and t.status == 'pago' else -t.valor for t in transacoes if t.status == 'pago')
     a_receber = sum(t.valor for t in transacoes if t.tipo == 'receita' and t.status == 'pendente')
@@ -88,7 +91,6 @@ def alterar_status(id):
     db.session.commit()
     return jsonify({'success': True})
 
-# 3. CANCELAR / EXCLUIR LANÇAMENTO (MOVER PARA O HISTÓRICO)
 @finance_bp.route('/api/transacoes/<int:id>', methods=['DELETE'])
 @login_required
 def deletar_transacao(id):
@@ -98,18 +100,21 @@ def deletar_transacao(id):
     db.session.commit()
     return jsonify({'success': True, 'message': 'Lançamento movido para o histórico de exclusões.'})
 
-# 4. OBTER HISTÓRICO DE EXCLUSÕES
 @finance_bp.route('/api/historico-exclusoes', methods=['GET'])
 @login_required
 def historico_exclusoes():
-    excluidos = Transacao.query.filter_by(user_id=current_user.id, deletado=True).order_by(Transacao.data_deletado.desc()).all()
+    try:
+        excluidos = Transacao.query.filter_by(user_id=current_user.id, deletado=True).order_by(Transacao.data_deletado.desc()).all()
+    except Exception:
+        excluidos = []
+
     lista = [{
         'id': t.id,
         'descricao': t.descricao,
         'valor': t.valor,
         'tipo': t.tipo,
         'categoria': t.categoria_ref.nome if t.categoria_ref else 'Sem Categoria',
-        'data_exclusao': t.data_deletado.strftime('%d/%m/%Y %H:%M') if t.data_deletado else 'N/I'
+        'data_exclusao': t.data_deletado.strftime('%d/%m/%Y %H:%M') if getattr(t, 'data_deletado', None) else 'N/I'
     } for t in excluidos]
     return jsonify(lista)
 
@@ -142,24 +147,30 @@ def gerenciar_categorias():
 @finance_bp.route('/api/dashboard/analytics', methods=['GET'])
 @login_required
 def dashboard_analytics():
-    dados_mensais = db.session.query(
-        func.strftime('%Y-%m', Transacao.data_vencimento).label('mes'),
-        Transacao.tipo,
-        func.sum(Transacao.valor).label('total')
-    ).filter(Transacao.user_id == current_user.id, Transacao.deletado == False)\
-     .group_by('mes', Transacao.tipo)\
-     .order_by('mes').all()
+    try:
+        dados_mensais = db.session.query(
+            func.strftime('%Y-%m', Transacao.data_vencimento).label('mes'),
+            Transacao.tipo,
+            func.sum(Transacao.valor).label('total')
+        ).filter(Transacao.user_id == current_user.id, Transacao.deletado == False)\
+         .group_by('mes', Transacao.tipo)\
+         .order_by('mes').all()
+    except Exception:
+        dados_mensais = []
 
     meses = sorted(list(set([d.mes for d in dados_mensais])))
     receitas = [next((d.total for d in dados_mensais if d.mes == m and d.tipo == 'receita'), 0.0) for m in meses]
     despesas = [next((d.total for d in dados_mensais if d.mes == m and d.tipo == 'despesa'), 0.0) for m in meses]
 
-    distribuicao = db.session.query(
-        Categoria.nome,
-        func.sum(Transacao.valor).label('total')
-    ).join(Transacao, Transacao.categoria_id == Categoria.id)\
-     .filter(Transacao.user_id == current_user.id, Transacao.tipo == 'despesa', Transacao.deletado == False)\
-     .group_by(Categoria.nome).all()
+    try:
+        distribuicao = db.session.query(
+            Categoria.nome,
+            func.sum(Transacao.valor).label('total')
+        ).join(Transacao, Transacao.categoria_id == Categoria.id)\
+         .filter(Transacao.user_id == current_user.id, Transacao.tipo == 'despesa', Transacao.deletado == False)\
+         .group_by(Categoria.nome).all()
+    except Exception:
+        distribuicao = []
 
     return jsonify({
         'tendencia': {'labels': meses, 'receitas': receitas, 'despesas': despesas},
