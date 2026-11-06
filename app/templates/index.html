@@ -21,7 +21,6 @@
                 <p class="text-xs text-slate-400 mt-1">Gestão financeira simples e inteligente</p>
             </div>
 
-            <!-- MENSAGEM DE ERRO/SUCESSO -->
             <div id="auth-alert" class="hidden mb-4 p-3 rounded-xl text-xs text-center border font-medium"></div>
 
             <div class="flex bg-slate-950 p-1 rounded-xl mb-6 border border-slate-800">
@@ -38,6 +37,15 @@
                     <label class="block text-xs font-medium text-slate-400 mb-1">Senha</label>
                     <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200">
                 </div>
+                
+                <!-- CHECKBOX PERMANECER CONECTADO -->
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="login-remember" checked class="w-4 h-4 rounded bg-slate-950 border-slate-800 text-emerald-600 focus:ring-emerald-500">
+                        <span class="text-xs text-slate-400">Permanecer conectado</span>
+                    </label>
+                </div>
+
                 <button type="submit" id="btn-login" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition">Entrar na Plataforma</button>
             </form>
 
@@ -65,7 +73,6 @@
 
     <!-- TELA DO PAINEL PRINCIPAL -->
     <div id="dashboard-screen" class="hidden min-h-screen flex flex-col md:flex-row">
-        <!-- SIDEBAR COM TODAS AS ABAS OPERACIONAIS -->
         <aside class="w-full md:w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0">
             <div class="p-6 flex items-center justify-between border-b border-slate-800">
                 <div class="flex items-center gap-3">
@@ -99,7 +106,6 @@
             </div>
         </aside>
 
-        <!-- CONTEÚDO -->
         <main class="flex-1 p-4 md:p-8 space-y-6">
             <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-800">
                 <div>
@@ -209,7 +215,7 @@
                 </div>
                 <div>
                     <label class="block text-slate-400 mb-1">Descrição</label>
-                    <input type="text" id="input-desc" required placeholder="Ex: Fornecedor de internet" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200">
+                    <input type="text" id="input-desc" required placeholder="Ex: Conta de Luz / Gasolina" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -301,7 +307,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         login: document.getElementById('login-input').value,
-                        senha: document.getElementById('login-password').value
+                        senha: document.getElementById('login-password').value,
+                        remember: document.getElementById('login-remember').checked
                     })
                 });
                 const data = await res.json();
@@ -340,7 +347,6 @@
             document.getElementById('kpi-receber').innerText = `R$ ${data.kpis.a_receber.toFixed(2)}`;
             document.getElementById('kpi-pagar').innerText = `R$ ${data.kpis.a_pagar.toFixed(2)}`;
 
-            // Atualiza DRE
             document.getElementById('dre-receita').innerText = `R$ ${data.kpis.saldo_geral.toFixed(2)}`;
             document.getElementById('dre-despesa').innerText = `R$ ${data.kpis.a_pagar.toFixed(2)}`;
             document.getElementById('dre-resultado').innerText = `R$ ${(data.kpis.saldo_geral - data.kpis.a_pagar).toFixed(2)}`;
