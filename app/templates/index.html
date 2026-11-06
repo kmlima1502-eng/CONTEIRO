@@ -37,14 +37,12 @@
                     <label class="block text-xs font-medium text-slate-400 mb-1">Senha</label>
                     <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200">
                 </div>
-                
                 <div class="flex items-center justify-between">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="login-remember" checked class="w-4 h-4 rounded bg-slate-950 border-slate-800 text-emerald-600 focus:ring-emerald-500">
                         <span class="text-xs text-slate-400">Permanecer conectado</span>
                     </label>
                 </div>
-
                 <button type="submit" id="btn-login" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-sm transition">Entrar na Plataforma</button>
             </form>
 
@@ -88,15 +86,6 @@
                 <button onclick="showSection('transactions')" id="nav-transactions" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-xl text-slate-400 hover:bg-slate-800">
                     <i data-lucide="arrow-left-right" class="w-4 h-4"></i> Contas Pagar/Receber
                 </button>
-                <button onclick="showSection('categories')" id="nav-categories" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-xl text-slate-400 hover:bg-slate-800">
-                    <i data-lucide="tags" class="w-4 h-4"></i> Categorias & Tags
-                </button>
-                <button onclick="showSection('reports')" id="nav-reports" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-xl text-slate-400 hover:bg-slate-800">
-                    <i data-lucide="file-text" class="w-4 h-4"></i> Relatório DRE
-                </button>
-                <button onclick="showSection('reconciliation')" id="nav-reconciliation" class="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold rounded-xl text-slate-400 hover:bg-slate-800">
-                    <i data-lucide="building-2" class="w-4 h-4"></i> Conciliação OFX
-                </button>
             </nav>
             <div class="p-4 border-t border-slate-800 mt-auto">
                 <button onclick="submitLogout()" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium text-rose-400 hover:bg-rose-500/10 rounded-xl">
@@ -116,7 +105,6 @@
                 </button>
             </header>
 
-            <!-- SEÇÃO 1: OVERVIEW -->
             <section id="sec-overview" class="space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
@@ -135,7 +123,7 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div class="lg:col-span-2 bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                        <h4 class="text-sm font-semibold text-white mb-4">Evolução Mensal (Receitas vs Despesas)</h4>
+                        <h4 class="text-sm font-semibold text-white mb-4">Evolução Mensal</h4>
                         <div class="h-64"><canvas id="chart-tendencia"></canvas></div>
                     </div>
                     <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
@@ -145,7 +133,6 @@
                 </div>
             </section>
 
-            <!-- SEÇÃO 2: TRANSAÇÕES -->
             <section id="sec-transactions" class="space-y-6 hidden">
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
                     <div class="overflow-x-auto">
@@ -165,35 +152,6 @@
                     </div>
                 </div>
             </section>
-
-            <!-- SEÇÃO 3: CATEGORIAS -->
-            <section id="sec-categories" class="space-y-6 hidden">
-                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                    <h3 class="text-sm font-bold text-white mb-4">Categorias Cadastradas</h3>
-                    <ul id="lista-categorias" class="space-y-2 text-xs"></ul>
-                </div>
-            </section>
-
-            <!-- SEÇÃO 4: RELATÓRIOS DRE -->
-            <section id="sec-reports" class="space-y-6 hidden">
-                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-3 text-xs">
-                    <h3 class="text-sm font-bold text-white mb-4">Demonstrativo de Resultado (DRE Simplificado)</h3>
-                    <div class="flex justify-between p-3 bg-slate-950 rounded-xl"><span class="font-bold">(=) Receita Total</span><span id="dre-receita" class="text-emerald-400 font-bold">R$ 0,00</span></div>
-                    <div class="flex justify-between p-3 bg-slate-950/50 text-slate-400"><span>(-) Despesas Totais</span><span id="dre-despesa" class="text-rose-400">R$ 0,00</span></div>
-                    <div class="flex justify-between p-3 bg-emerald-950/40 border border-emerald-500/20 rounded-xl font-bold"><span class="text-white">(=) Resultado Líquido</span><span id="dre-resultado" class="text-emerald-400">R$ 0,00</span></div>
-                </div>
-            </section>
-
-            <!-- SEÇÃO 5: CONCILIAÇÃO OFX -->
-            <section id="sec-reconciliation" class="space-y-6 hidden">
-                <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl text-center space-y-3">
-                    <i data-lucide="upload-cloud" class="w-10 h-10 text-emerald-400 mx-auto"></i>
-                    <h4 class="text-sm font-semibold text-white">Importar Extrato Bancário (.OFX)</h4>
-                    <p class="text-xs text-slate-400">Envie o arquivo OFX do seu banco para fazer o cruzamento de lançamentos.</p>
-                    <input type="file" id="file-ofx" class="hidden">
-                    <button onclick="document.getElementById('file-ofx').click()" class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-xs font-semibold border border-slate-700">Selecionar Extrato OFX</button>
-                </div>
-            </section>
         </main>
     </div>
 
@@ -207,20 +165,20 @@
             <form onsubmit="salvarTransacao(event)" class="space-y-3 text-xs">
                 <div>
                     <label class="block text-slate-400 mb-1">Tipo</label>
-                    <select id="input-tipo" onchange="filtrarCategorias()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200">
+                    <select id="input-tipo" onchange="filtrarCategoriasPorTipo()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200">
                         <option value="despesa">Conta a Pagar (Saída)</option>
                         <option value="receita">Conta a Receber (Entrada)</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-slate-400 mb-1">Categoria</label>
-                    <select id="input-cat" onchange="verificarCategoriaOutros()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200"></select>
+                    <select id="input-cat" onchange="verificarOutros()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200"></select>
                 </div>
                 
-                <!-- CAMPO ESPECÍFICO QUANDO MARCAR "OUTROS" -->
-                <div id="box-outros-desc" class="hidden">
-                    <label class="block text-amber-400 mb-1 font-medium">Explique o motivo/gasto (Outros)</label>
-                    <input type="text" id="input-desc-outros" placeholder="Ex: Manutenção da torneira / Reembolso" class="w-full bg-slate-950 border border-amber-500/40 rounded-xl p-2.5 text-slate-200 focus:border-amber-500">
+                <!-- CAMPO QUE APARECE APENAS QUANDO A CATEGORIA É "OUTROS" -->
+                <div id="box-outros" class="hidden">
+                    <label class="block text-amber-400 mb-1 font-semibold">Especifique o motivo/gasto (Outros)</label>
+                    <input type="text" id="input-detalhe-outros" placeholder="Ex: Manutenção da torneira / Reembolso" class="w-full bg-slate-950 border border-amber-500/50 rounded-xl p-2.5 text-slate-200">
                 </div>
 
                 <div>
@@ -245,7 +203,7 @@
     <script>
         lucide.createIcons();
         let chartTendencia, chartDistribuicao;
-        let todasCategorias = [];
+        let listaCategoriasGeral = [];
 
         function showAlert(msg, type) {
             const box = document.getElementById('auth-alert');
@@ -273,7 +231,7 @@
         }
 
         function showSection(sec) {
-            ['overview', 'transactions', 'categories', 'reports', 'reconciliation'].forEach(s => {
+            ['overview', 'transactions'].forEach(s => {
                 document.getElementById(`sec-${s}`).classList.add('hidden');
             });
             document.getElementById(`sec-${sec}`).classList.remove('hidden');
@@ -281,7 +239,7 @@
 
         function openModal(id) { 
             document.getElementById(id).classList.remove('hidden'); 
-            filtrarCategorias();
+            filtrarCategoriasPorTipo();
         }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
@@ -327,7 +285,7 @@
                     document.getElementById('user-display-name').innerText = data.nome;
                     document.getElementById('auth-screen').classList.add('hidden');
                     document.getElementById('dashboard-screen').classList.remove('hidden');
-                    await carregarCategorias();
+                    await carregarCategoriasBD();
                     await carregarDados();
                 } else {
                     showAlert(data.message, 'error');
@@ -339,39 +297,35 @@
             }
         }
 
-        async function carregarCategorias() {
+        async function carregarCategoriasBD() {
             const res = await fetch('/api/categorias');
-            todasCategorias = await res.json();
-            
-            const lista = document.getElementById('lista-categorias');
-            lista.innerHTML = todasCategorias.map(c => `<li class="p-3 bg-slate-950 rounded-xl flex justify-between"><span>${c.nome}</span><span class="text-slate-400 capitalize">${c.tipo}</span></li>`).join('');
-            
-            filtrarCategorias();
+            listaCategoriasGeral = await res.json();
+            filtrarCategoriasPorTipo();
         }
 
-        function filtrarCategorias() {
-            const tipoSelecionado = document.getElementById('input-tipo').value;
+        function filtrarCategoriasPorTipo() {
+            const tipo = document.getElementById('input-tipo').value;
             const selectCat = document.getElementById('input-cat');
             
-            const filtradas = todasCategorias.filter(c => c.tipo === tipoSelecionado);
+            const filtradas = listaCategoriasGeral.filter(c => c.tipo === tipo);
             selectCat.innerHTML = filtradas.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
             
-            verificarCategoriaOutros();
+            verificarOutros();
         }
 
-        function verificarCategoriaOutros() {
+        function verificarOutros() {
             const selectCat = document.getElementById('input-cat');
-            const boxOutros = document.getElementById('box-outros-desc');
-            const inputOutros = document.getElementById('input-desc-outros');
-            
-            const catObj = todasCategorias.find(c => c.id == selectCat.value);
-            
-            if (catObj && catObj.nome.toLowerCase() === 'outros') {
+            const boxOutros = document.getElementById('box-outros');
+            const inputDetalhe = document.getElementById('input-detalhe-outros');
+
+            const selectedOptionText = selectCat.options[selectCat.selectedIndex] ? selectCat.options[selectCat.selectedIndex].text : '';
+
+            if (selectedOptionText.trim().toLowerCase() === 'outros') {
                 boxOutros.classList.remove('hidden');
-                inputOutros.setAttribute('required', 'true');
+                inputDetalhe.setAttribute('required', 'true');
             } else {
                 boxOutros.classList.add('hidden');
-                inputOutros.removeAttribute('required');
+                inputDetalhe.removeAttribute('required');
             }
         }
 
@@ -382,10 +336,6 @@
             document.getElementById('kpi-saldo').innerText = `R$ ${data.kpis.saldo_geral.toFixed(2)}`;
             document.getElementById('kpi-receber').innerText = `R$ ${data.kpis.a_receber.toFixed(2)}`;
             document.getElementById('kpi-pagar').innerText = `R$ ${data.kpis.a_pagar.toFixed(2)}`;
-
-            document.getElementById('dre-receita').innerText = `R$ ${data.kpis.saldo_geral.toFixed(2)}`;
-            document.getElementById('dre-despesa').innerText = `R$ ${data.kpis.a_pagar.toFixed(2)}`;
-            document.getElementById('dre-resultado').innerText = `R$ ${(data.kpis.saldo_geral - data.kpis.a_pagar).toFixed(2)}`;
 
             const tbody = document.getElementById('tabela-transacoes');
             tbody.innerHTML = data.transacoes.map(t => `
@@ -406,16 +356,13 @@
 
         async function salvarTransacao(e) {
             e.preventDefault();
-            
-            let descricaoFinal = document.getElementById('input-desc').value;
+            let desc = document.getElementById('input-desc').value;
             const selectCat = document.getElementById('input-cat');
-            const catObj = todasCategorias.find(c => c.id == selectCat.value);
+            const catNome = selectCat.options[selectCat.selectedIndex].text;
 
-            if (catObj && catObj.nome.toLowerCase() === 'outros') {
-                const detalheOutros = document.getElementById('input-desc-outros').value;
-                if (detalheOutros) {
-                    descricaoFinal = `${descricaoFinal} (${detalheOutros})`;
-                }
+            if (catNome.trim().toLowerCase() === 'outros') {
+                const detalhe = document.getElementById('input-detalhe-outros').value;
+                if (detalhe) desc = `${desc} (${detalhe})`;
             }
 
             await fetch('/api/transacoes', {
@@ -423,14 +370,14 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     tipo: document.getElementById('input-tipo').value,
-                    descricao: descricaoFinal,
+                    descricao: desc,
                     valor: document.getElementById('input-valor').value,
                     data_vencimento: document.getElementById('input-vencimento').value,
                     categoria_id: selectCat.value
                 })
             });
             closeModal('modal-transacao');
-            document.getElementById('input-desc-outros').value = '';
+            document.getElementById('input-detalhe-outros').value = '';
             carregarDados();
         }
 

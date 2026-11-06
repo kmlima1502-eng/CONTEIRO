@@ -6,15 +6,33 @@ from sqlalchemy import func
 
 finance_bp = Blueprint('finance', __name__)
 
+LISTA_CATEGORIAS_EXATAS = [
+    # 8 Categorias de Contas a Pagar (Despesas)
+    {'nome': 'Carro', 'tipo': 'despesa'},
+    {'nome': 'IPTU', 'tipo': 'despesa'},
+    {'nome': 'Conta de Energia', 'tipo': 'despesa'},
+    {'nome': 'Conta de Água', 'tipo': 'despesa'},
+    {'nome': 'Supermercado', 'tipo': 'despesa'},
+    {'nome': 'Cartão de crédito', 'tipo': 'despesa'},
+    {'nome': 'Gasto pessoal', 'tipo': 'despesa'},
+    {'nome': 'Outros', 'tipo': 'despesa'},
+
+    # 5 Categorias de Contas a Receber (Receitas)
+    {'nome': 'Salário', 'tipo': 'receita'},
+    {'nome': 'Aluguel', 'tipo': 'receita'},
+    {'nome': 'Décimo terceiro', 'tipo': 'receita'},
+    {'nome': 'Vendas', 'tipo': 'receita'},
+    {'nome': 'Outros', 'tipo': 'receita'}
+]
+
 @finance_bp.route('/')
 def index():
     return render_template('index.html')
 
 # ==========================================
-# MÓDULO 2: RECURSOS OPERACIONAIS & CRUD
+# GESTÃO DE TRANSAÇÕES
 # ==========================================
 
-# 1. FLUXO DE CAIXA E TRANSAÇÕES
 @finance_bp.route('/api/transacoes', methods=['GET', 'POST'])
 @login_required
 def gerenciar_transacoes():
@@ -27,8 +45,6 @@ def gerenciar_transacoes():
             status=data.get('status', 'pendente'),
             data_vencimento=datetime.strptime(data['data_vencimento'], '%Y-%m-%d').date(),
             categoria_id=int(data['categoria_id']),
-            subcategoria_id=int(data['subcategoria_id']) if data.get('subcategoria_id') else None,
-            centro_custo=data.get('centro_custo'),
             user_id=current_user.id
         )
         db.session.add(nova)
@@ -48,8 +64,7 @@ def gerenciar_transacoes():
         'tipo': t.tipo,
         'status': t.status,
         'vencimento': t.data_vencimento.strftime('%d/%m/%Y'),
-        'categoria': t.categoria_ref.nome if t.categoria_ref else 'Sem Categoria',
-        'conciliado': t.conciliado
+        'categoria': t.categoria_ref.nome if t.categoria_ref else 'Sem Categoria'
     } for t in transacoes]
 
     return jsonify({
@@ -61,7 +76,6 @@ def gerenciar_transacoes():
         }
     })
 
-# 2. ALTERAR STATUS DE PAGAMENTO (BAIXA RÁPIDA)
 @finance_bp.route('/api/transacoes/<int:id>/status', methods=['PATCH'])
 @login_required
 def alterar_status(id):
@@ -73,88 +87,27 @@ def alterar_status(id):
     db.session.commit()
     return jsonify({'success': True})
 
-# 3. GESTÃO DE CATEGORIAS E SUBCATEGORIAS
-@finance_bp.route('/api/categorias', methods=['GET', 'POST'])
+# ==========================================
+# GESTÃO DE CATEGORIAS
+# ==========================================
+
+@finance_bp.route('/api/categorias', methods=['GET'])
 @login_required
 def gerenciar_categorias():
-    if request.method == 'POST':
-        data = request.get_json()
-        cat = Categoria(nome=data['nome'], tipo=data['tipo'], user_id=current_user.id)
-        db.session.add(cat)
-        db.session.commit()
-        return jsonify({'success': True}), 201
-
     categorias = Categoria.query.filter_by(user_id=current_user.id).all()
     
-    # Se o utilizador não tiver categorias, gera a nova lista especificada
-    if not categorias:
-        cats_padrao = [
-            # Contas a Pagar (Despesas)
-            Categoria(nome='Carro', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='IPTU', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='Conta de Energia', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='Conta de Água', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='Supermercado', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='Cartão de crédito', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='Gasto pessoal', tipo='despesa', user_id=current_user.id),
-            Categoria(nome='Outros', tipo='despesa', user_id=current_user.id),
-
-            # Contas a Receber (Receitas)
-            Categoria(nome='Salário', tipo='receita', user_id=current_user.id),
-            Categoria(nome='Aluguel', tipo='receita', user_id=current_user.id),
-            Categoria(nome='Décimo terceiro', tipo='receita', user_id=current_user.id),
-            Categoria(nome='Vendas', tipo='receita', user_id=current_user.id),
-            Categoria(nome='Outros', tipo='receita', user_id=current_user.id)
-        ]
-        db.session.add_all(cats_padrao)
+    # Se o utilizador não tiver as 13 categorias corretas, limpa e recria a lista exata
+    if len(categorias) != 13:
+        Categoria.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+        
+        novas_cats = [Categoria(nome=item['nome'], tipo=item['tipo'], user_id=current_user.id) for item in LISTA_CATEGORIAS_EXATAS]
+        db.session.add_all(novas_cats)
         db.session.commit()
         categorias = Categoria.query.filter_by(user_id=current_user.id).all()
 
-    res = [{
-        'id': c.id,
-        'nome': c.nome,
-        'tipo': c.tipo
-    } for c in categorias]
+    res = [{'id': c.id, 'nome': c.nome, 'tipo': c.tipo} for c in categorias]
     return jsonify(res)
-
-# 4. METAS ORÇAMENTÁRIAS (TETOS DE GASTO)
-@finance_bp.route('/api/metas', methods=['GET', 'POST'])
-@login_required
-def gerenciar_metas():
-    if request.method == 'POST':
-        data = request.get_json()
-        meta = MetaOrcamentaria(
-            categoria_id=data['categoria_id'],
-            teto_gasto=float(data['teto_gasto']),
-            mes_ano=data['mes_ano'],
-            user_id=current_user.id
-        )
-        db.session.add(meta)
-        db.session.commit()
-        return jsonify({'success': True}), 201
-
-    metas = MetaOrcamentaria.query.filter_by(user_id=current_user.id).all()
-    resultado = []
-    for m in metas:
-        gastos = db.session.query(func.sum(Transacao.valor)).filter(
-            Transacao.user_id == current_user.id,
-            Transacao.categoria_id == m.categoria_id,
-            Transacao.tipo == 'despesa',
-            func.strftime('%Y-%m', Transacao.data_vencimento) == m.mes_ano
-        ).scalar() or 0.0
-        
-        resultado.append({
-            'id': m.id,
-            'categoria_id': m.categoria_id,
-            'teto_gasto': m.teto_gasto,
-            'gasto_atual': gastos,
-            'progresso_perc': round((gastos / m.teto_gasto) * 100, 2) if m.teto_gasto > 0 else 0
-        })
-    return jsonify(resultado)
-
-# ==========================================
-# MÓDULO 3: VISÃO ANALÍTICA (GRÁFICOS)
-# ==========================================
 
 @finance_bp.route('/api/dashboard/analytics', methods=['GET'])
 @login_required
@@ -178,17 +131,7 @@ def dashboard_analytics():
      .filter(Transacao.user_id == current_user.id, Transacao.tipo == 'despesa')\
      .group_by(Categoria.nome).all()
 
-    cat_labels = [c.nome for c in distribuicao]
-    cat_data = [c.total for c in distribuicao]
-
     return jsonify({
-        'tendencia': {
-            'labels': meses,
-            'receitas': receitas,
-            'despesas': despesas
-        },
-        'distribuicao': {
-            'labels': cat_labels,
-            'data': cat_data
-        }
+        'tendencia': {'labels': meses, 'receitas': receitas, 'despesas': despesas},
+        'distribuicao': {'labels': [c.nome for c in distribuicao], 'data': [c.total for c in distribuicao]}
     })
