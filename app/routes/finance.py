@@ -88,7 +88,7 @@ def alterar_status(id):
     return jsonify({'success': True})
 
 # ==========================================
-# GESTÃO DE CATEGORIAS
+# GESTÃO DE CATEGORIAS (FORÇA A RECRIAÇÃO NA RENDER)
 # ==========================================
 
 @finance_bp.route('/api/categorias', methods=['GET'])
@@ -96,12 +96,18 @@ def alterar_status(id):
 def gerenciar_categorias():
     categorias = Categoria.query.filter_by(user_id=current_user.id).all()
     
-    # Se o utilizador não tiver as 13 categorias corretas, limpa e recria a lista exata
-    if len(categorias) != 13:
+    nomes_atuais = [c.nome for c in categorias]
+    nomes_esperados = [item['nome'] for item in LISTA_CATEGORIAS_EXATAS]
+    
+    # Se a conta tiver categorias antigas ou quantidade diferente de 13, apaga e insere a lista certa
+    if len(categorias) != 13 or set(nomes_atuais) != set(nomes_esperados):
         Categoria.query.filter_by(user_id=current_user.id).delete()
         db.session.commit()
         
-        novas_cats = [Categoria(nome=item['nome'], tipo=item['tipo'], user_id=current_user.id) for item in LISTA_CATEGORIAS_EXATAS]
+        novas_cats = [
+            Categoria(nome=item['nome'], tipo=item['tipo'], user_id=current_user.id) 
+            for item in LISTA_CATEGORIAS_EXATAS
+        ]
         db.session.add_all(novas_cats)
         db.session.commit()
         categorias = Categoria.query.filter_by(user_id=current_user.id).all()
