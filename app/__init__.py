@@ -1,41 +1,19 @@
 import os
 from flask import Flask
-from config import Config
-from app.models import db, User
-from flask_login import LoginManager
+from app.models import db
 
 def create_app():
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    project_root = os.path.abspath(os.path.join(base_dir, '..'))
+    app = Flask(__name__)
     
-    # Garante que a pasta instance é criada automaticamente na raiz do projeto
-    instance_path = os.path.join(project_root, 'instance')
-    os.makedirs(instance_path, exist_ok=True)
+    db_url = os.getenv('DATABASE_URL')
+    if db_url:
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql+pg8000://", 1)
+        elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+pg8000://"):
+            db_url = db_url.replace("postgresql://", "postgresql+pg8000://", 1)
 
-    app = Flask(
-        __name__,
-        template_folder=os.path.join(base_dir, 'templates'),
-        static_folder=os.path.join(base_dir, 'static'),
-        instance_path=instance_path
-    )
-    app.config.from_object(Config)
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url or 'sqlite:///' + os.path.join(app.instance_path, 'database.db')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
-
-    login_manager = LoginManager()
-    login_manager.init_app(app)
-
-    @login_manager.user_loader
-    def load_user(user_id):
-        return User.query.get(int(user_id))
-
-    from app.routes.auth import auth_bp
-    from app.routes.finance import finance_bp
-    
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(finance_bp)
-
-    with app.app_context():
-        db.create_all()
-
     return app
